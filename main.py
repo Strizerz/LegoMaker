@@ -13,8 +13,28 @@ quality = 0.2
 #turn it into a grid of voxels without a mesh
 voxelGrid = mesh.voxelized(pitch=quality)
 
-#turn the voxel grid back to a mesh to visualize
-voxelMesh = voxelGrid.as_boxes()
+#positions of each voxels
+voxelPos = voxelGrid.points
 
-#show the model
-voxelMesh.show()
+#define sizes for cylinders for studs
+studRadius = quality / 3
+studHeight = quality / 5
+
+#initialize list of studs
+studs = []
+
+#for each voxel add a cylinder on top
+for pos in voxelPos:
+    stud = trimesh.creation.cylinder(radius=studRadius, height=studHeight, sections=16)
+    stud.apply_translation([pos[0], pos[1], pos[2] + quality / 2 + studHeight / 2])
+    studs.append(stud)
+
+#combine the cubes with cylinders to create studs
+allMeshes = [mesh] + studs
+combined = trimesh.util.concatenate(allMeshes)
+
+#show the studs
+combined.show()
+
+
+
