@@ -1,40 +1,65 @@
-import trimesh
+import trimesh 
+import numpy as np
 
-path = "src\\Car.obj"
-#load the model
-mesh = trimesh.load(path)
+def loadModel(path):
+    #load the model
+    mesh = trimesh.load(path)
+    #change the model from a scene to the first object which is usually the model 
+    mesh = trimesh.util.concatenate(tuple(mesh.geometry.values()))
+    return mesh
 
-#change the model from a scene to the first object which is usually the model 
-mesh = trimesh.util.concatenate(tuple(mesh.geometry.values()))
+def voxelizeMesh(mesh, quality):
+    #turn it into a grid of voxels without a mesh
+    voxelGrid = mesh.voxelized(pitch=quality)
+    voxelMesh = voxelGrid.as_boxes()
+    return voxelGrid, voxelMesh
 
-#quality or size of the voxels, lower value is higher quality
-quality = 0.2
+def createStuds(voxelGrid, quality, studRadius, studHeight):
+    #positions of each voxels
+    voxelPos = voxelGrid.points
 
-#turn it into a grid of voxels without a mesh
-voxelGrid = mesh.voxelized(pitch=quality)
+    #initialize list of studs
+    studs = []
 
-#positions of each voxels
-voxelPos = voxelGrid.points
+    #for each voxel add a cylinder on top
+    for pos in voxelPos:
+        stud = trimesh.creation.cylinder(radius=studRadius, height=studHeight, sections=16)
 
-#define sizes for cylinders for studs
-studRadius = quality / 3
-studHeight = quality / 5
+        #rotate the cylinders
+        stud.apply_transform(trimesh.transformations.rotation_matrix(
+            angle=np.pi / 2,
+            direction=[1, 0, 0],
+            point=[0, 0, 0]
+        ))
+        stud.apply_translation([pos[0], pos[1] + quality / 2 + studHeight / 2, pos[2]])
+        
+        studs.append(stud)
 
-#initialize list of studs
-studs = []
+    return studs
 
-#for each voxel add a cylinder on top
-for pos in voxelPos:
-    stud = trimesh.creation.cylinder(radius=studRadius, height=studHeight, sections=16)
-    stud.apply_translation([pos[0], pos[1], pos[2] + quality / 2 + studHeight / 2])
-    studs.append(stud)
+def main():
+    path = "src\\Car.obj"
 
-#combine the cubes with cylinders to create studs
-allMeshes = [mesh] + studs
-combined = trimesh.util.concatenate(allMeshes)
+    mesh = loadModel(path)
 
-#show the studs
-combined.show()
+    #quality or size of the voxels, lower value is higher quality
+    quality = 0.2
+
+    voxelGrid, voxelMesh = voxelizeMesh(mesh, quality)
+
+    #define sizes for cylinders for studs
+    studRadius = quality / 3
+    studHeight = quality / 4
+
+    studs = createStuds(voxelGrid, quality, studRadius, studHeight)
+
+    #combine the cubes with cylinders to create studs
+    allMeshes = [voxelMesh] + studs
+    combined = trimesh.util.concatenate(allMeshes)
+
+    #show the studs
+    combined.show()
 
 
-
+if __name__ == "__main__":
+    main()
