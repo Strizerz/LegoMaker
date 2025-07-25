@@ -33,7 +33,7 @@ def createStuds(voxelGrid, quality, studRadius, studHeight, colors):
                 cx = origin[0] + (ix + 0.5) * quality
                 cz = origin[2] + (iy + 0.5) * quality
                 top_y = origin[1] + sy * quality
-                stud = trimesh.creation.cylinder(radius=studRadius, height=studHeight, sections=16)
+                stud = trimesh.creation.cylinder(radius=studRadius, height=studHeight, sections=8)
                 stud.apply_transform(trimesh.transformations.rotation_matrix(
                     angle=np.pi / 2,
                     direction=[1, 0, 0],
@@ -179,7 +179,7 @@ def createOutlineVisible(placements, pitch, color=[0,0,0,255]):
     path.colors = np.tile(color, (len(path.entities), 1)).astype(np.uint8)
     return path
 
-def createStudOutlines(studs, segments=16, color=[0,0,0,255]):
+def createStudOutlines(studs, segments=12, color=[0,0,0,255]):
     outlines = []
     for stud in studs:
         # get center and axis (stud was rotated π/2 around X, so axis is +Y)
@@ -225,16 +225,21 @@ def main():
 
     #define available bricks
     inventory = {
-        (4, 4, 1): 20,
-        (2, 4, 1): 100,
+        (1, 4, 1): 200,
+        (1, 2, 1): 400,
+        (2, 4, 1): 300,
+        (2, 1, 2): 200,
         (1, 1, 1): 9999
+        
     }
 
     #define color for each brick size
     colors = {
-        (4, 4, 1): [255, 0, 0, 255],
+        (1, 4, 1): [0, 0, 255, 255],
+        (1, 2, 1): [0, 255, 255, 255],
         (2, 4, 1): [0, 255, 0, 255],
-        (1, 1, 1): [0, 0, 255, 255]
+        (2, 1, 2): [255, 255, 0, 255],
+        (1, 1, 1): [255, 0, 0, 255],
     }
 
     placements, rebuilt = Builder(voxelGrid, quality, inventory, colors)
